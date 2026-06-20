@@ -46,9 +46,9 @@ export function remainingValue(item: SessionItem): number {
   return round2(item.price * Math.max(0, item.qty - item.claimed_qty));
 }
 
-/** Is a line fully claimed (within rounding)? */
+/** Is a line fully claimed (within a sub-unit rounding sliver)? */
 export function isFullyClaimed(item: SessionItem): boolean {
-  return item.claimed_qty >= item.qty - 1e-6;
+  return item.claimed_qty >= item.qty - 0.01;
 }
 
 /** Total value already paid for via payments rows. */
@@ -64,5 +64,5 @@ export function paidValue(payments: Payment[]): number {
 export function isSettled(items: SessionItem[], payments: Payment[]): boolean {
   if (payments.length === 0) return false;
   const total = billTotal(items);
-  return total > 0 && paidValue(payments) >= total - 1e-6;
+  return total > 0 && paidValue(payments) >= total - 0.05;
 }

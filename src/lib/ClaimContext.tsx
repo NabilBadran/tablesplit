@@ -71,7 +71,14 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
           serverClaimed.current[item.id] ?? item.claimed_qty,
           item.claimed_qty
         );
-        const target = Math.max(0, Math.min(item.qty, round2(base + delta)));
+        let target = Math.max(0, Math.min(item.qty, round2(base + delta)));
+        // Fractional splits (e.g. 1 ÷ 3 = 0.33, ×3 = 0.99) leave a sub-unit
+        // sliver that would never settle. If a claim lands within a sliver of
+        // full, snap to exactly the quantity — the last share absorbs the
+        // rounding, exactly like rounding a real split bill.
+        if (delta > 0 && item.qty - target > 1e-6 && item.qty - target < 0.05) {
+          target = item.qty;
+        }
         const realDelta = round2(target - base);
         if (realDelta === 0) return; // already at a bound — ignore extra taps
         const { data, error } = await supabase.rpc("claim_delta", {
@@ -82,8 +89,17 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
           console.error("[TableSplit] claim_delta failed", error);
           return;
         }
-        serverClaimed.current[item.id] = (data as SessionItem).claimed_qty;
-        bump(item.id, realDelta);
+        // Credit ourselves only what the server *actually* moved, bounded by
+        // what we intended. Guards against double-counting when another diner
+        // claims the same item at the same moment (server clamps; we must too).
+        const newClaimed = (data as SessionItem).claimed_qty;
+        const applied = round2(newClaimed - base);
+        const credit =
+          realDelta >= 0
+            ? Math.min(realDelta, Math.max(0, applied))
+            : Math.max(realDelta, Math.min(0, applied));
+        serverClaimed.current[item.id] = newClaimed;
+        if (credit !== 0) bump(item.id, credit);
       };
       // Serialise per item so concurrent taps can't race past the limit.
       const prev = chains.current[item.id] ?? Promise.resolve();
