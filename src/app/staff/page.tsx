@@ -169,7 +169,13 @@ function Dashboard() {
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-8">
-      <header className="flex items-center justify-between">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-brand"
+      >
+        ← Home
+      </Link>
+      <header className="mt-3 flex items-center justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">
             {VENUE_NAME} · Service

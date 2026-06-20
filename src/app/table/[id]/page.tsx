@@ -177,6 +177,14 @@ export default function BillPage() {
 function EqualSplitBar({ items }: { items: SessionItem[] }) {
   const claims = useClaims();
   const [picking, setPicking] = useState(false);
+  const [customN, setCustomN] = useState("");
+
+  const splitBy = (n: number) => {
+    if (!Number.isFinite(n) || n < 2) return;
+    claims.applyEqualSplit(items, Math.round(n));
+    setPicking(false);
+    setCustomN("");
+  };
 
   if (claims.equalSplitN) {
     return (
@@ -205,18 +213,38 @@ function EqualSplitBar({ items }: { items: SessionItem[] }) {
             {[2, 3, 4, 5, 6].map((n) => (
               <button
                 key={n}
-                onClick={() => {
-                  claims.applyEqualSplit(items, n);
-                  setPicking(false);
-                }}
+                onClick={() => splitBy(n)}
                 className="tnum flex-1 rounded-btn border border-line bg-cream py-2.5 text-sm font-semibold text-ink hover:border-brand hover:bg-brand-tint"
               >
                 {n}
               </button>
             ))}
           </div>
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-xs text-muted">More than 6?</span>
+            <input
+              type="number"
+              min={2}
+              inputMode="numeric"
+              value={customN}
+              onChange={(e) => setCustomN(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && splitBy(Number(customN))}
+              placeholder="e.g. 8"
+              className="tnum w-20 rounded-btn border border-line bg-cream px-3 py-2 text-center outline-none focus:border-gold"
+            />
+            <button
+              onClick={() => splitBy(Number(customN))}
+              disabled={!customN || Number(customN) < 2}
+              className="rounded-btn bg-brand px-3 py-2 text-sm font-semibold text-cream disabled:opacity-40"
+            >
+              Split
+            </button>
+          </div>
           <button
-            onClick={() => setPicking(false)}
+            onClick={() => {
+              setPicking(false);
+              setCustomN("");
+            }}
             className="mt-2 w-full py-1 text-xs text-muted"
           >
             Cancel

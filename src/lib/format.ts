@@ -57,14 +57,12 @@ export function paidValue(payments: Payment[]): number {
 }
 
 /**
- * A session is "settled" when at least one diner has paid and every claimed
- * pound has been covered. Unclaimed items are allowed to remain (spec 4.3) —
- * staff resolve those manually, so they don't block settlement.
+ * A session is "settled" only when the WHOLE bill has been paid — every item
+ * on the table is covered, not just the claimed ones. This keeps the green
+ * "Paid" status accurate: it appears the moment the last pound is settled.
  */
 export function isSettled(items: SessionItem[], payments: Payment[]): boolean {
   if (payments.length === 0) return false;
-  const claimedValue = round2(
-    items.reduce((sum, i) => sum + i.price * i.claimed_qty, 0)
-  );
-  return paidValue(payments) >= claimedValue - 1e-6 && claimedValue > 0;
+  const total = billTotal(items);
+  return total > 0 && paidValue(payments) >= total - 1e-6;
 }
