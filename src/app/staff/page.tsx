@@ -189,7 +189,7 @@ function Dashboard() {
 
       <Legend />
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_minmax(360px,420px)]">
+      <div className="mt-6 grid items-start gap-8 lg:grid-cols-[1fr_minmax(360px,420px)]">
         {/* Floor plan */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {loading
