@@ -15,6 +15,7 @@ import {
 } from "@/lib/format";
 import { Brand } from "@/components/Brand";
 import { Spinner } from "@/components/Feedback";
+import Link from "next/link";
 import type { SessionItem } from "@/lib/types";
 
 const CATEGORY_ORDER = ["starter", "main", "dessert", "drink"] as const;
@@ -91,6 +92,31 @@ export default function BillPage() {
           moment — this page updates by itself.
         </p>
         <Spinner className="mt-6 h-5 w-5 text-gold" />
+      </Centered>
+    );
+  }
+
+  // Once this diner has paid, don't show the claim list again — show a
+  // confirmation with a link to their receipt instead.
+  if (claims.payment) {
+    return (
+      <Centered>
+        <Brand size="md" />
+        <div className="mt-8 flex h-16 w-16 items-center justify-center rounded-full bg-brand text-3xl text-cream">
+          ✓
+        </div>
+        <p className="mt-5 font-serif text-2xl font-semibold text-brand">
+          You&apos;re all paid
+        </p>
+        <p className="mt-2 max-w-xs text-sm text-muted">
+          Thanks! You&apos;ve already paid your share at {table?.name}.
+        </p>
+        <Link
+          href={`/table/${id}/pay`}
+          className="mt-6 rounded-btn bg-brand px-5 py-3 text-sm font-semibold text-cream shadow-soft"
+        >
+          View your receipt
+        </Link>
       </Centered>
     );
   }

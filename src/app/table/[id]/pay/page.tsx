@@ -187,12 +187,6 @@ export default function PayPage() {
       >
         Leave a review
       </button>
-      <Link
-        href={`/table/${id}`}
-        className="mt-3 block text-center text-sm font-medium text-muted"
-      >
-        Back to the bill
-      </Link>
     </main>
   );
 }
@@ -434,6 +428,7 @@ function EmailReceipt({
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
+  const [errMsg, setErrMsg] = useState("");
 
   const SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
   const TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
@@ -442,6 +437,7 @@ function EmailReceipt({
   const send = async () => {
     if (!/.+@.+\..+/.test(email)) return;
     if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
+      setErrMsg("keys not loaded — restart the dev server & hard-refresh");
       setStatus("error");
       return;
     }
@@ -467,7 +463,9 @@ function EmailReceipt({
       );
       setStatus("sent");
     } catch (err) {
+      const e = err as { text?: string; message?: string };
       console.error("[TableSplit] email failed", err);
+      setErrMsg(e?.text || e?.message || "send failed — check the EmailJS template");
       setStatus("error");
     }
   };
@@ -518,8 +516,7 @@ function EmailReceipt({
       </div>
       {status === "error" && (
         <p className="mt-2 text-xs text-gold">
-          Couldn&apos;t send — check the email address and that the EmailJS keys
-          are set in your env.
+          Couldn&apos;t send{errMsg ? `: ${errMsg}` : ""}.
         </p>
       )}
     </div>

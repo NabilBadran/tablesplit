@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { supabase } from "./supabaseClient";
@@ -56,18 +57,39 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Push a delta to the shared row, then mirror it locally as "mine".
+  // Latest server-confirmed claimed_qty per item + a per-item promise chain so
+  // rapid taps are serialised. The DB clamps to [0, qty]; the client must mirror
+  // only the amount actually applied, or a spammed "+" drifts the local "mine"
+  // count past what really exists.
+  const serverClaimed = useRef<Record<string, number>>({});
+  const chains = useRef<Record<string, Promise<unknown>>>({});
+
   const applyDelta = useCallback(
-    async (item: SessionItem, delta: number) => {
-      const { error } = await supabase.rpc("claim_delta", {
-        p_item: item.id,
-        p_delta: delta,
-      });
-      if (error) {
-        console.error("[TableSplit] claim_delta failed", error);
-        return;
-      }
-      bump(item.id, delta);
+    (item: SessionItem, delta: number) => {
+      const run = async () => {
+        const base = Math.max(
+          serverClaimed.current[item.id] ?? item.claimed_qty,
+          item.claimed_qty
+        );
+        const target = Math.max(0, Math.min(item.qty, round2(base + delta)));
+        const realDelta = round2(target - base);
+        if (realDelta === 0) return; // already at a bound — ignore extra taps
+        const { data, error } = await supabase.rpc("claim_delta", {
+          p_item: item.id,
+          p_delta: realDelta,
+        });
+        if (error) {
+          console.error("[TableSplit] claim_delta failed", error);
+          return;
+        }
+        serverClaimed.current[item.id] = (data as SessionItem).claimed_qty;
+        bump(item.id, realDelta);
+      };
+      // Serialise per item so concurrent taps can't race past the limit.
+      const prev = chains.current[item.id] ?? Promise.resolve();
+      const next = prev.then(run, run);
+      chains.current[item.id] = next;
+      return next;
     },
     [bump]
   );
@@ -140,6 +162,8 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
     setServicePct(null);
     setEqualSplitN(null);
     setPayment(null);
+    serverClaimed.current = {};
+    chains.current = {};
   }, []);
 
   const value = useMemo<ClaimContextValue>(
