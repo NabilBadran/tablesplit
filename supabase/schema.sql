@@ -70,18 +70,25 @@ create index on payments (session_id);
 -- Called from the diner UI so two phones grabbing the last unit can't push
 -- claimed_qty past what was actually ordered.
 -- ============================================================================
+-- Atomically apply a claim delta and report how much was ACTUALLY applied.
+-- `select ... for update` locks the row so concurrent claims on the same item
+-- are serialised: each caller reads the true current value and learns its own
+-- applied amount (new - old). Without this, two phones claiming the same unit
+-- at once would both credit themselves and the table over-claims.
 create or replace function claim_delta(p_item uuid, p_delta numeric)
-returns session_items
+returns json
 language plpgsql
 as $$
 declare
-  r session_items;
+  old_qty numeric;
+  max_qty numeric;
+  new_qty numeric;
 begin
-  update session_items
-     set claimed_qty = greatest(0, least(qty, claimed_qty + p_delta))
-   where id = p_item
-  returning * into r;
-  return r;
+  select claimed_qty, qty into old_qty, max_qty
+    from session_items where id = p_item for update;
+  new_qty := greatest(0, least(max_qty, old_qty + p_delta));
+  update session_items set claimed_qty = new_qty where id = p_item;
+  return json_build_object('claimed_qty', new_qty, 'applied', new_qty - old_qty);
 end;
 $$;
 

@@ -89,11 +89,19 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
           console.error("[TableSplit] claim_delta failed", error);
           return;
         }
-        // Credit ourselves only what the server *actually* moved, bounded by
-        // what we intended. Guards against double-counting when another diner
-        // claims the same item at the same moment (server clamps; we must too).
-        const newClaimed = (data as SessionItem).claimed_qty;
-        const applied = round2(newClaimed - base);
+        // The DB function locks the row and returns exactly how much it applied
+        // ({ claimed_qty, applied }). That `applied` is authoritative even when
+        // two phones claim the same item at once. Older DB versions return the
+        // row instead — fall back to a best-effort estimate there.
+        const res = data as { claimed_qty?: number; applied?: number };
+        const newClaimed =
+          typeof res.applied === "number"
+            ? (res.claimed_qty as number)
+            : (data as SessionItem).claimed_qty;
+        const applied =
+          typeof res.applied === "number"
+            ? res.applied
+            : round2(newClaimed - base);
         const credit =
           realDelta >= 0
             ? Math.min(realDelta, Math.max(0, applied))

@@ -322,7 +322,11 @@ function ItemCard({ item }: { item: SessionItem }) {
             </p>
           )}
           <p className="tnum text-[11px] text-muted">
-            {fully ? "Fully claimed" : `${available} of ${item.qty} left`}
+            {fully
+              ? "Fully claimed"
+              : split
+              ? `${item.split_count - Math.round(item.claimed_qty / shareSize)} of ${item.split_count} shares left`
+              : `${available} of ${item.qty} left`}
           </p>
         </div>
       </div>
@@ -353,7 +357,7 @@ function ItemCard({ item }: { item: SessionItem }) {
                 />
               )}
               <button
-                disabled={available < shareSize - 1e-6}
+                disabled={fully}
                 onClick={() => claims.claimShare(item)}
                 className="rounded-btn bg-brand px-3 py-1.5 text-xs font-semibold text-cream disabled:opacity-40"
               >
