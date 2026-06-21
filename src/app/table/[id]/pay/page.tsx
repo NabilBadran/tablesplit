@@ -29,12 +29,17 @@ export default function PayPage() {
     () =>
       items
         .filter((i) => claims.myUnits(i.id) > 0)
-        .map((i) => ({
-          id: i.id,
-          name: i.name,
-          units: claims.myUnits(i.id),
-          amount: round2(i.price * claims.myUnits(i.id)),
-        })),
+        .map((i) => {
+          const mine = claims.myUnits(i.id);
+          const splitN = i.split_count > 1 ? i.split_count : (claims.equalSplitN ?? 1);
+          const myShares = splitN > 1 ? Math.round(mine / (i.qty / splitN)) : null;
+          return {
+            id: i.id,
+            name: i.name,
+            units: myShares ?? mine,
+            amount: myShares != null ? round2((i.price / splitN) * myShares) : round2(i.price * mine),
+          };
+        }),
     [items, claims]
   );
 
