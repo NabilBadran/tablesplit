@@ -178,15 +178,16 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
       round2(
         items.reduce((sum, i) => {
           const claimed = myClaims[i.id] ?? 0;
-          if (i.split_count > 1 && claimed > 0) {
-            const shareSize = i.qty / i.split_count;
+          const splitN = i.split_count > 1 ? i.split_count : (equalSplitN ?? 1);
+          if (splitN > 1 && claimed > 0) {
+            const shareSize = i.qty / splitN;
             const myShares = Math.round(claimed / shareSize);
-            return sum + (i.price / i.split_count) * myShares;
+            return sum + (i.price / splitN) * myShares;
           }
           return sum + i.price * claimed;
         }, 0)
       ),
-    [myClaims]
+    [myClaims, equalSplitN]
   );
 
   const reset = useCallback(() => {
