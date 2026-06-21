@@ -29,7 +29,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 export default function BillPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { table, session, items, payments, loading, error } = useTableSession(id);
+  const { table, session, items, loading, error } = useTableSession(id);
   const claims = useClaims();
   const [catById, setCatById] = useState<Record<string, string>>({});
 
@@ -153,7 +153,7 @@ export default function BillPage() {
       </header>
 
       {/* Equal-split shortcut */}
-      <EqualSplitBar items={items} hasPriorPayments={payments.length > 0} />
+      <EqualSplitBar items={items} />
 
       {/* Items grouped by category */}
       <div className="mt-6 space-y-6">
@@ -167,7 +167,7 @@ export default function BillPage() {
               </p>
               <div className="space-y-2.5">
                 {group.map((item) => (
-                  <ItemCard key={item.id} item={item} hasPriorPayments={payments.length > 0} />
+                  <ItemCard key={item.id} item={item} />
                 ))}
               </div>
             </section>
@@ -215,12 +215,10 @@ export default function BillPage() {
 }
 
 // ── Equal-split bar ─────────────────────────────────────────────────────────
-function EqualSplitBar({ items, hasPriorPayments }: { items: SessionItem[]; hasPriorPayments: boolean }) {
+function EqualSplitBar({ items }: { items: SessionItem[] }) {
   const claims = useClaims();
   const [picking, setPicking] = useState(false);
   const [customN, setCustomN] = useState("");
-
-  if (hasPriorPayments && !claims.equalSplitN) return null;
 
   const splitBy = (n: number) => {
     if (!Number.isFinite(n) || n < 2) return;
@@ -306,7 +304,7 @@ function EqualSplitBar({ items, hasPriorPayments }: { items: SessionItem[]; hasP
 }
 
 // ── Item card ───────────────────────────────────────────────────────────────
-function ItemCard({ item, hasPriorPayments }: { item: SessionItem; hasPriorPayments: boolean }) {
+function ItemCard({ item }: { item: SessionItem }) {
   const claims = useClaims();
   const mine = claims.myUnits(item.id);
   const available = round2(item.qty - item.claimed_qty);
@@ -400,7 +398,7 @@ function ItemCard({ item, hasPriorPayments }: { item: SessionItem; hasPriorPayme
           </div>
         ) : (
           <div className="flex items-center justify-between">
-            <SplitPicker item={item} hasPriorPayments={hasPriorPayments} />
+            <SplitPicker item={item} />
             <div className="flex items-center gap-2">
               {mine > 0 && (
                 <Stepper label="−" onClick={() => claims.unclaimUnit(item)} />
@@ -425,12 +423,12 @@ function ItemCard({ item, hasPriorPayments }: { item: SessionItem; hasPriorPayme
   );
 }
 
-function SplitPicker({ item, hasPriorPayments }: { item: SessionItem; hasPriorPayments: boolean }) {
+function SplitPicker({ item }: { item: SessionItem }) {
   const claims = useClaims();
   const [open, setOpen] = useState(false);
 
-  // Lock splitting once anyone has claimed, split, or paid.
-  if (item.claimed_qty > 1e-6 || item.split_count > 1 || hasPriorPayments) return <span />;
+  // Only offer splitting before anyone has claimed this line.
+  if (item.claimed_qty > 1e-6) return <span />;
 
   if (!open)
     return (
