@@ -29,7 +29,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 export default function BillPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { table, session, items, loading, error } = useTableSession(id);
+  const { table, session, items, payments, loading, error } = useTableSession(id);
   const claims = useClaims();
   const [catById, setCatById] = useState<Record<string, string>>({});
 
@@ -167,7 +167,7 @@ export default function BillPage() {
               </p>
               <div className="space-y-2.5">
                 {group.map((item) => (
-                  <ItemCard key={item.id} item={item} />
+                  <ItemCard key={item.id} item={item} hasPriorPayments={payments.length > 0} />
                 ))}
               </div>
             </section>
@@ -304,7 +304,7 @@ function EqualSplitBar({ items }: { items: SessionItem[] }) {
 }
 
 // ── Item card ───────────────────────────────────────────────────────────────
-function ItemCard({ item }: { item: SessionItem }) {
+function ItemCard({ item, hasPriorPayments }: { item: SessionItem; hasPriorPayments: boolean }) {
   const claims = useClaims();
   const mine = claims.myUnits(item.id);
   const available = round2(item.qty - item.claimed_qty);
@@ -398,7 +398,7 @@ function ItemCard({ item }: { item: SessionItem }) {
           </div>
         ) : (
           <div className="flex items-center justify-between">
-            <SplitPicker item={item} />
+            <SplitPicker item={item} hasPriorPayments={hasPriorPayments} />
             <div className="flex items-center gap-2">
               {mine > 0 && (
                 <Stepper label="−" onClick={() => claims.unclaimUnit(item)} />
@@ -423,12 +423,12 @@ function ItemCard({ item }: { item: SessionItem }) {
   );
 }
 
-function SplitPicker({ item }: { item: SessionItem }) {
+function SplitPicker({ item, hasPriorPayments }: { item: SessionItem; hasPriorPayments: boolean }) {
   const claims = useClaims();
   const [open, setOpen] = useState(false);
 
-  // Only offer splitting before anyone has claimed or split this line.
-  if (item.claimed_qty > 1e-6 || item.split_count > 1) return <span />;
+  // Lock splitting once anyone has claimed, split, or paid.
+  if (item.claimed_qty > 1e-6 || item.split_count > 1 || hasPriorPayments) return <span />;
 
   if (!open)
     return (
