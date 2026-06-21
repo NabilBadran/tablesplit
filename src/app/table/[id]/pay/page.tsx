@@ -54,6 +54,21 @@ export default function PayPage() {
     if (session && subtotal <= 0) router.replace(`/table/${id}`);
   }, [claims, session, subtotal, id, router]);
 
+  // Release claims if user leaves the pay page without completing payment.
+  useEffect(() => {
+    const release = () => {
+      if (claims.payment) return;
+      const entries = Object.entries(claims.myClaims);
+      if (!entries.length) return;
+      const payload = JSON.stringify({
+        claims: entries.map(([itemId, units]) => ({ itemId, delta: -units })),
+      });
+      navigator.sendBeacon("/api/unclaim", new Blob([payload], { type: "application/json" }));
+    };
+    window.addEventListener("pagehide", release);
+    return () => window.removeEventListener("pagehide", release);
+  }, [claims]);
+
   // Run the mock payment when the diner submits the card form.
   const pay = async () => {
     if (started.current || !session) return;
