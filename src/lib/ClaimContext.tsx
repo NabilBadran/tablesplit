@@ -49,7 +49,7 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
 
   const bump = useCallback((id: string, delta: number) => {
     setMyClaims((prev) => {
-      const next = round2((prev[id] ?? 0) + delta);
+      const next = (prev[id] ?? 0) + delta;
       const copy = { ...prev };
       if (next <= 1e-6) delete copy[id];
       else copy[id] = next;
@@ -128,7 +128,7 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
   );
 
   const shareSize = (item: SessionItem) =>
-    round2(item.qty / Math.max(1, item.split_count));
+    item.qty / Math.max(1, item.split_count);
 
   const claimShare = useCallback(
     (item: SessionItem) => applyDelta(item, shareSize(item)),
@@ -153,7 +153,7 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
     async (items: SessionItem[], n: number) => {
       setEqualSplitN(n);
       for (const item of items) {
-        await applyDelta(item, round2(item.qty / n));
+        await applyDelta(item, item.qty / n);
       }
     },
     [applyDelta]
@@ -165,7 +165,7 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
       setEqualSplitN(null);
       if (!share) return;
       for (const item of items) {
-        await applyDelta(item, -round2(item.qty / share));
+        await applyDelta(item, -(item.qty / share));
       }
     },
     [applyDelta, equalSplitN]

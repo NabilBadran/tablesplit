@@ -295,7 +295,7 @@ function ItemCard({ item }: { item: SessionItem }) {
   const available = round2(item.qty - item.claimed_qty);
   const locked = claims.equalSplitN !== null;
   const split = item.split_count > 1;
-  const shareSize = round2(item.qty / Math.max(1, item.split_count));
+  const shareSize = item.qty / Math.max(1, item.split_count);
   const myShares = split ? Math.round(mine / shareSize) : 0;
   const fully = isFullyClaimed(item);
 
