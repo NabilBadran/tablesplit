@@ -318,7 +318,14 @@ function ItemCard({ item }: { item: SessionItem }) {
         <div className="text-right">
           {mine > 0 && (
             <p className="tnum font-serif text-lg font-semibold text-brand">
-              {money(round2(item.price * mine))}
+              {(() => {
+                const splitN = item.split_count > 1 ? item.split_count : (claims.equalSplitN ?? 1);
+                if (splitN > 1) {
+                  const myShares2 = Math.round(mine / (item.qty / splitN));
+                  return money(round2((item.price / splitN) * myShares2));
+                }
+                return money(round2(item.price * mine));
+              })()}
             </p>
           )}
           <p className="tnum text-[11px] text-muted">
