@@ -427,8 +427,8 @@ function SplitPicker({ item }: { item: SessionItem }) {
   const claims = useClaims();
   const [open, setOpen] = useState(false);
 
-  // Only offer splitting before anyone has claimed this line.
-  if (item.claimed_qty > 1e-6) return <span />;
+  // Only offer splitting before anyone has claimed or split this line.
+  if (item.claimed_qty > 1e-6 || item.split_count > 1) return <span />;
 
   if (!open)
     return (
