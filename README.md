@@ -19,7 +19,7 @@ Splitting a bill at a restaurant is almost always awkward. One person fronts the
 3. Tap the items you personally ordered.
 4. Choose a service charge and pay your share.
 
-That's it. Shared a bottle of wine? Split that dish a few ways with a tap. Want to keep it simple? The whole table can split everything equally in one tap. Each person only ever pays for what they had, and their service charge applies to their own total — so no one's stuck covering someone else's order.
+That's it. Shared a bottle grape juice? Split that dish a few ways with a tap. Want to keep it simple? The whole table can split everything equally in one tap. Each person only ever pays for what they had, and their service charge applies to their own total — so no one's stuck covering someone else's order.
 
 Everything updates in real time. The moment one person claims an item, it disappears from everyone else's available list, so two people can't accidentally pay for the same dish.
 
