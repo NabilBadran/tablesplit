@@ -153,7 +153,7 @@ export default function BillPage() {
       </header>
 
       {/* Equal-split shortcut */}
-      <EqualSplitBar items={items} />
+      <EqualSplitBar items={items} hasPriorPayments={payments.length > 0} />
 
       {/* Items grouped by category */}
       <div className="mt-6 space-y-6">
@@ -215,10 +215,12 @@ export default function BillPage() {
 }
 
 // ── Equal-split bar ─────────────────────────────────────────────────────────
-function EqualSplitBar({ items }: { items: SessionItem[] }) {
+function EqualSplitBar({ items, hasPriorPayments }: { items: SessionItem[]; hasPriorPayments: boolean }) {
   const claims = useClaims();
   const [picking, setPicking] = useState(false);
   const [customN, setCustomN] = useState("");
+
+  if (hasPriorPayments && !claims.equalSplitN) return null;
 
   const splitBy = (n: number) => {
     if (!Number.isFinite(n) || n < 2) return;
