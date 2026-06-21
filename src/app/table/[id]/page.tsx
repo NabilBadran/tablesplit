@@ -56,6 +56,21 @@ export default function BillPage() {
     }
   }, [session, claims]);
 
+  // Release claims if the user leaves without paying.
+  useEffect(() => {
+    const release = () => {
+      if (claims.payment) return; // already paid — keep the record
+      const entries = Object.entries(claims.myClaims);
+      if (!entries.length) return;
+      const payload = JSON.stringify({
+        claims: entries.map(([itemId, units]) => ({ itemId, delta: -units })),
+      });
+      navigator.sendBeacon("/api/unclaim", new Blob([payload], { type: "application/json" }));
+    };
+    window.addEventListener("pagehide", release);
+    return () => window.removeEventListener("pagehide", release);
+  }, [claims]);
+
   const subtotal = claims.mySubtotal(items);
   const pct = claims.servicePct ?? 0;
   const service = serviceAmount(subtotal, pct);
